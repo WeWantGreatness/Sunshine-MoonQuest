@@ -274,7 +274,7 @@ function add_ubuntu_deps() {
   add_test_ppa
   add_debian_based_deps
   dependencies+=(
-    "libappindicator3-dev"
+    "libayatana-appindicator3-dev"
   )
 }
 
@@ -733,6 +733,15 @@ elif grep -q "Ubuntu 25.04" /etc/os-release; then
   cuda_build="575.57.08"
   gcc_version="14"
   nvm_node=0
+elif grep -q "Pop!_OS 22.04" /etc/os-release; then
+  distro="ubuntu"
+  version="22.04"
+  package_update_command="${sudo_cmd} apt-get update"
+  package_install_command="${sudo_cmd} apt-get install -y"
+  cuda_version="12.9.1"
+  cuda_build="575.57.08"
+  gcc_version="13"
+  nvm_node=1
 else
   echo "Unsupported Distro or Version"
   exit 1

@@ -589,8 +589,16 @@ namespace platf {
       int init(const std::string &display_name, const ::video::config_t &config) {
         delay = std::chrono::nanoseconds {1s} / config.framerate;
 
-        int monitor_index = util::from_view(display_name);
-        int monitor = 0;
+        int monitor_index = -1;
+        bool streamDesktop = false;
+        if (!display_name.empty()) {
+          if (display_name == "desktop") {
+            streamDesktop = true;
+            monitor_index = 0;  // Use first monitor for now
+          } else {
+            monitor_index = util::from_view(display_name);
+          }
+        }
 
         fs::path card_dir {"/dev/dri"sv};
         for (auto &entry : fs::directory_iterator {card_dir}) {
@@ -616,6 +624,7 @@ namespace platf {
           }
 
           auto end = std::end(card);
+          int monitor = 0;
           for (auto plane = std::begin(card); plane != end; ++plane) {
             // Skip unused planes
             if (!plane->fb_id) {
@@ -626,7 +635,7 @@ namespace platf {
               continue;
             }
 
-            if (monitor != monitor_index) {
+            if (!streamDesktop && monitor != monitor_index) {
               ++monitor;
               continue;
             }
@@ -746,6 +755,14 @@ namespace platf {
 
       // Neatly break from nested for loop
       break_loop:
+
+        if (streamDesktop) {
+          width = ::platf::kms::env_width;
+          height = ::platf::kms::env_height;
+          offset_x = 0;
+          offset_y = 0;
+          BOOST_LOG(info) << "Streaming entire desktop with res "sv << width << 'x' << height;
+        }
 
         // Look for the cursor plane for this CRTC
         cursor_plane_id = -1;
@@ -1694,6 +1711,8 @@ namespace platf {
     BOOST_LOG(debug) << "Desktop resolution: "sv << kms::env_width << 'x' << kms::env_height;
 
     kms::card_descriptors = std::move(cds);
+
+    display_names.emplace_back("desktop");
 
     return display_names;
   }

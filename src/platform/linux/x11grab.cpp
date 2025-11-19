@@ -398,45 +398,58 @@ namespace platf {
       refresh();
 
       int streamedMonitor = -1;
+      bool streamDesktop = false;
       if (!display_name.empty()) {
-        streamedMonitor = (int) util::from_view(display_name);
+        if (display_name == "desktop") {
+          streamDesktop = true;
+        } else {
+          streamedMonitor = (int) util::from_view(display_name);
+        }
       }
 
-      if (streamedMonitor != -1) {
-        BOOST_LOG(info) << "Configuring selected display ("sv << streamedMonitor << ") to stream"sv;
-        screen_res_t screenr {x11::rr::GetScreenResources(xdisplay.get(), xwindow)};
-        int output = screenr->noutput;
-
-        output_info_t result;
-        int monitor = 0;
-        for (int x = 0; x < output; ++x) {
-          output_info_t out_info {x11::rr::GetOutputInfo(xdisplay.get(), screenr.get(), screenr->outputs[x])};
-          if (out_info) {
-            if (monitor++ == streamedMonitor) {
-              result = std::move(out_info);
-              break;
-            }
-          }
-        }
-
-        if (!result) {
-          BOOST_LOG(error) << "Could not stream display number ["sv << streamedMonitor << "], there are only ["sv << monitor << "] displays."sv;
-          return -1;
-        }
-
-        if (result->crtc) {
-          crtc_info_t crt_info {x11::rr::GetCrtcInfo(xdisplay.get(), screenr.get(), result->crtc)};
-          BOOST_LOG(info)
-            << "Streaming display: "sv << result->name << " with res "sv << crt_info->width << 'x' << crt_info->height << " offset by "sv << crt_info->x << 'x' << crt_info->y;
-
-          width = crt_info->width;
-          height = crt_info->height;
-          offset_x = crt_info->x;
-          offset_y = crt_info->y;
-        } else {
-          BOOST_LOG(warning) << "Couldn't get requested display info, defaulting to recording entire virtual desktop"sv;
+      if (streamedMonitor != -1 || streamDesktop) {
+        if (streamDesktop) {
+          BOOST_LOG(info) << "Streaming entire desktop"sv;
           width = xattr.width;
           height = xattr.height;
+          offset_x = 0;
+          offset_y = 0;
+        } else {
+          BOOST_LOG(info) << "Configuring selected display ("sv << streamedMonitor << ") to stream"sv;
+          screen_res_t screenr {x11::rr::GetScreenResources(xdisplay.get(), xwindow)};
+          int output = screenr->noutput;
+
+          output_info_t result;
+          int monitor = 0;
+          for (int x = 0; x < output; ++x) {
+            output_info_t out_info {x11::rr::GetOutputInfo(xdisplay.get(), screenr.get(), screenr->outputs[x])};
+            if (out_info) {
+              if (monitor++ == streamedMonitor) {
+                result = std::move(out_info);
+                break;
+              }
+            }
+          }
+
+          if (!result) {
+            BOOST_LOG(error) << "Could not stream display number ["sv << streamedMonitor << "], there are only ["sv << monitor << "] displays."sv;
+            return -1;
+          }
+
+          if (result->crtc) {
+            crtc_info_t crt_info {x11::rr::GetCrtcInfo(xdisplay.get(), screenr.get(), result->crtc)};
+            BOOST_LOG(info)
+              << "Streaming display: "sv << result->name << " with res "sv << crt_info->width << 'x' << crt_info->height << " offset by "sv << crt_info->x << 'x' << crt_info->y;
+
+            width = crt_info->width;
+            height = crt_info->height;
+            offset_x = crt_info->x;
+            offset_y = crt_info->y;
+          } else {
+            BOOST_LOG(warning) << "Couldn't get requested display info, defaulting to recording entire virtual desktop"sv;
+            width = xattr.width;
+            height = xattr.height;
+          }
         }
       } else {
         width = xattr.width;
@@ -796,6 +809,8 @@ namespace platf {
     for (auto x = 0; x < monitor; ++x) {
       names.emplace_back(std::to_string(x));
     }
+
+    names.emplace_back("desktop");
 
     return names;
   }

@@ -714,7 +714,11 @@ namespace cuda {
         }
 
         int streamedMonitor = -1;
+        bool streamDesktop = false;
         if (!display_name.empty()) {
+          if (display_name == "desktop") {
+            streamDesktop = true;
+          }
           if (status_params->bXRandRAvailable) {
             auto monitor_nr = util::from_view(display_name);
 
@@ -748,6 +752,9 @@ namespace cuda {
           capture_params.eTrackingType = NVFBC_TRACKING_OUTPUT;
           capture_params.dwOutputId = output.dwId;
         } else {
+          if (streamDesktop) {
+            BOOST_LOG(info) << "Selected entire virtual desktop for streaming"sv;
+          }
           capture_params.eTrackingType = NVFBC_TRACKING_SCREEN;
 
           width = status_params->screenSize.w;
@@ -1016,6 +1023,10 @@ namespace platf {
       BOOST_LOG(info) << "  Offset: "sv << output.trackedBox.x << 'x' << output.trackedBox.y;
       display_names.emplace_back(std::to_string(x));
     }
+
+    // Allow capturing whole virtual desktop via named option
+    // (consistent with other backends: "desktop" -> stream entire virtual desktop)
+    display_names.emplace_back("desktop");
 
     return display_names;
   }

@@ -5,6 +5,7 @@
 // standard includes
 #include <cmath>
 #include <thread>
+#include <windows.h>
 
 // platform includes
 #include <initguid.h>
@@ -1101,6 +1102,9 @@ namespace platf {
         }
       }
     }
+
+    // Add desktop option for multi-monitor capture
+    display_names.emplace_back("desktop");
 
     return display_names;
   }

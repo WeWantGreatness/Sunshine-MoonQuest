@@ -933,7 +933,7 @@ editing the `conf` file in a text editor. Use the examples as reference.
     <tr>
         <td>Description</td>
         <td colspan="2">
-            Select the display number you want to stream.
+            Select the display you want to stream. For multi-monitor setups, use `desktop` to capture all monitors.
             @tip{To find the appropriate values follow these instructions.
             <br>
             <br>
@@ -1037,6 +1037,12 @@ editing the `conf` file in a text editor. Use the examples as reference.
         <td>Example (Windows)</td>
         <td colspan="2">@code{}
             output_name = {daeac860-f4db-5208-b1f5-cf59444fb768}
+            @endcode</td>
+    </tr>
+    <tr>
+        <td>Example (Windows Multi-Monitor)</td>
+        <td colspan="2">@code{}
+            output_name = desktop
             @endcode</td>
     </tr>
 </table>

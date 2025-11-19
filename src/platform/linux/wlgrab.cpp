@@ -53,28 +53,40 @@ namespace wl {
       auto monitor = interface.monitors[0].get();
 
       if (!display_name.empty()) {
-        auto streamedMonitor = util::from_view(display_name);
+        if (display_name == "desktop") {
+          // Stream entire desktop
+          offset_x = 0;
+          offset_y = 0;
+          width = ::wl::env_width;
+          height = ::wl::env_height;
+          output = nullptr;  // or first monitor's output?
+          BOOST_LOG(info) << "Selected entire desktop for streaming"sv;
+        } else {
+          auto streamedMonitor = util::from_view(display_name);
 
-        if (streamedMonitor >= 0 && streamedMonitor < interface.monitors.size()) {
-          monitor = interface.monitors[streamedMonitor].get();
+          if (streamedMonitor >= 0 && streamedMonitor < interface.monitors.size()) {
+            monitor = interface.monitors[streamedMonitor].get();
+          }
         }
       }
 
-      monitor->listen(interface.output_manager);
+      if (output != nullptr) {
+        monitor->listen(interface.output_manager);
 
-      display.roundtrip();
+        display.roundtrip();
 
-      output = monitor->output;
+        output = monitor->output;
 
-      offset_x = monitor->viewport.offset_x;
-      offset_y = monitor->viewport.offset_y;
-      width = monitor->viewport.width;
-      height = monitor->viewport.height;
+        offset_x = monitor->viewport.offset_x;
+        offset_y = monitor->viewport.offset_y;
+        width = monitor->viewport.width;
+        height = monitor->viewport.height;
+
+        BOOST_LOG(info) << "Selected monitor ["sv << monitor->description << "] for streaming"sv;
+      }
 
       this->env_width = ::wl::env_width;
       this->env_height = ::wl::env_height;
-
-      BOOST_LOG(info) << "Selected monitor ["sv << monitor->description << "] for streaming"sv;
       BOOST_LOG(debug) << "Offset: "sv << offset_x << 'x' << offset_y;
       BOOST_LOG(debug) << "Resolution: "sv << width << 'x' << height;
       BOOST_LOG(debug) << "Desktop Resolution: "sv << env_width << 'x' << env_height;
@@ -433,6 +445,8 @@ namespace platf {
 
       display_names.emplace_back(std::to_string(x));
     }
+
+    display_names.emplace_back("desktop");
 
     BOOST_LOG(info) << "--------- End of Wayland monitor list ---------"sv;
 
