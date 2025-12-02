@@ -1,0 +1,16 @@
+# PipeWire configuration to fix audio clipping/crackling issues
+# 
+# This file should be placed at: ~/.config/pipewire/pipewire.conf.d/pipewire.conf
+# 
+# To apply this fix:
+# 1. Create the directory: mkdir -p ~/.config/pipewire/pipewire.conf.d
+# 2. Copy this file: cp docs/pipewire-audio-fix.conf.example ~/.config/pipewire/pipewire.conf.d/pipewire.conf
+# 3. Restart PipeWire: systemctl --user restart pipewire pipewire-pulse wireplumber
+#
+# This setting prevents PipeWire from using very low latency values that can cause
+# buffer underruns (xruns), which manifest as audio clipping or crackling in the stream.
+#
+# For more information, see: docs/troubleshooting.md#audio-clippingcrackling-with-pipewire
+
+context.properties = {default.clock.min-quantum = 1024}
+

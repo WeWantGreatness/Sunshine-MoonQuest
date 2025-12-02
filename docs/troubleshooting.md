@@ -207,6 +207,40 @@ high as long as the encoder is used.
 ### Gamescope compatibility
 Some users have reported stuttering issues when streaming games running within Gamescope.
 
+### Audio clipping/crackling with PipeWire
+If you experience audio clipping, crackling, or popping sounds when streaming audio through Sunshine on a Linux system using PipeWire, this is often caused by buffer underruns (xruns) due to PipeWire using very low latency settings.
+
+**Symptoms:**
+- Audio clipping or crackling in the streamed audio
+- Source audio plays fine on the host system
+- Issue only appears in the Sunshine stream
+
+**Solution:**
+Set a minimum quantum value for PipeWire to prevent it from using excessively low latency settings that cause buffer underruns:
+
+**Option 1: Copy the example config file (recommended)**
+```bash
+mkdir -p ~/.config/pipewire/pipewire.conf.d
+cp docs/pipewire-audio-fix.conf.example ~/.config/pipewire/pipewire.conf.d/pipewire.conf
+```
+
+**Option 2: Create the config manually**
+```bash
+mkdir -p ~/.config/pipewire/pipewire.conf.d
+echo "context.properties = {default.clock.min-quantum = 1024}" | tee ~/.config/pipewire/pipewire.conf.d/pipewire.conf
+```
+
+After creating the configuration file, restart PipeWire services:
+
+```bash
+systemctl --user restart pipewire pipewire-pulse wireplumber
+```
+
+Alternatively, you can restart your computer for the changes to take effect.
+
+**Explanation:**
+PipeWire's quantum value determines the audio buffer size. Very low quantum values (e.g., 64 samples) result in extremely low latency (~1.45ms at 44100Hz) which can cause buffer underruns on systems with weaker audio hardware or high CPU load. Setting a minimum quantum of 1024 samples ensures PipeWire uses a reasonable latency that prevents these underruns.
+
 ## macOS
 
 ### Dynamic session lookup failed
